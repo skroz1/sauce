@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+#
+# name - desc
+#
+# Copyright (C) 2014 Scott F. Crosby <skroz1@gmail.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+import configparser
+import os
+from pathlib import Path
+import typer
+
+app = typer.Typer()
+
+def conceal_key(key):
+    """
+    Conceal the key by showing only the last four characters.
+    """
+    if key:
+        return '*' * (len(key) - 4) + key[-4:]
+    else:
+        return ''
+
+@app.command()
+def configure(
+    ctx: typer.Context,
+    setting: str = typer.Argument(None, help="Configuration in the format variable=value."),
+    section: str = typer.Option("global", "--section", "-s", help="The section of the config file to edit."),
+    delete: str = typer.Option(None, "--delete", "-d", help="Delete a specific configuration key.")
+):
+    """
+    Interactively configure AWS credentials and default region, set a specific configuration, or delete a configuration key.
+    """
+    config = configparser.ConfigParser()
+    config_file_path = ctx.obj.get('CONFIG_FILE', os.path.join(Path.home(), ".sraus"))
+
+    # Check if the config file already exists
+    if os.path.exists(config_file_path):
+        config.read(config_file_path)
+
+    if section not in config:
+        config[section] = {}
+
+    if delete:
+        if delete in config[section]:
+            del config[section][delete]
+        else:
+            typer.echo(f"Key '{delete}' not found in section '{section}'.", err=True)
+            raise typer.Exit(code=1)
+    elif setting:
+        # Split setting into key and value
+        if '=' in setting:
+            key, value = setting.split('=', 1)
+            config[section][key] = value
+        else:
+            typer.echo("Invalid setting format. Use 'variable=value'.", err=True)
+            raise typer.Exit(code=1)
+    else:
+        # Interactive configuration
+        if section == "global":
+            current_access_key = config[section].get('aws_access_key', '')
+            current_secret_key = config[section].get('aws_secret_access_key', '')
+            entered_access_key = typer.prompt("AWS Access Key", default=conceal_key(current_access_key))
+            entered_secret_key = typer.prompt("AWS Secret Access Key", default=conceal_key(current_secret_key), hide_input=True)
+            config[section]['aws_access_key'] = current_access_key if entered_access_key == conceal_key(current_access_key) else entered_access_key
+            config[section]['aws_secret_access_key'] = current_secret_key if entered_secret_key == conceal_key(current_secret_key) else entered_secret_key
+            default_region = config[section].get('region', 'us-east-1')
+            config[section]['region'] = typer.prompt("Default region name", default=default_region)
+
+    # Write the configuration to file
+    with open(config_file_path, 'w') as configfile:
+        config.write(configfile)
+
+    typer.echo(f"Configuration saved to {config_file_path}.")
+
+if __name__ == "__main__":
+    app()
