@@ -19,11 +19,14 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os
+import sys
 import typer
 import configparser
 from pathlib import Path
+import logging
 
-from hello import hello
+# import commands
+from hello import hello         # for testing
 from ses_key import seskey
 from update_ip import updateMyIP
 from configure import configure
@@ -68,8 +71,11 @@ def main(
             typer.echo(f"Error creating log directory {log_dir}: {e}", err=True)
             raise typer.Exit(code=1)
 
-    # Set up logging here (not yet implemented in this snippet)
-    # ...
+    log_file = os.path.join(log_dir, 'cmdline.log')
+    logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(message)s')
+
+    # Log the command line arguments
+    logging.info('Command Line: ' + ' '.join(sys.argv))
 
     ctx.obj["LOG_DIR"] = log_dir
     ctx.obj["DRY_RUN"] = dry_run
