@@ -7,6 +7,11 @@ import hashlib
 import base64
 import typer
 
+from utils.logging import get_loggers
+
+# Get the loggers
+loggers = get_loggers()
+
 SMTP_REGIONS = [
     "us-east-2",  # US East (Ohio)
     "us-east-1",  # US East (N. Virginia)
@@ -52,6 +57,8 @@ def seskey(secretkey: str, region: str):
     """
     Convert an IAM Secret Key to a form suitable for SES.
     """
+    loggers['debug'].debug("Executing seskey() subcommand")
+
     try:
         smtp_password = calculate_key(secretkey, region)
         print(smtp_password)

@@ -24,11 +24,17 @@
 import typer
 from utils import network
 from route53 import route53
+from utils.logging import get_loggers
+
+# Get the loggers
+loggers = get_loggers()
 
 def updateMyIP(ctx: typer.Context, hostname: str):
     """
     Update the specified A record with the calling host's current IP.
     """
+    loggers['debug'].debug("Executing updatemyip() subcommand")
+
     dry_run = ctx.obj["DRY_RUN"]
     quiet = ctx.obj["QUIET"]
     force = ctx.obj["FORCE"]

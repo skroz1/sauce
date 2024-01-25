@@ -24,12 +24,14 @@ import typer
 import configparser
 from pathlib import Path
 import logging
+from utils.logging import setup_logging
 
 # import commands
 from hello import hello         # for testing
 from ses_key import seskey
 from update_ip import updateMyIP
 from configure import configure
+from listvtltapes import listvtltapes
 
 app = typer.Typer()
 
@@ -62,20 +64,16 @@ def main(
     config = read_config(config_file)
     ctx.obj["CONFIG"] = config
 
-    # Logging configuration
+    # Determine log directory and initialize logging
     log_dir = logdir or config.get('logging', 'logdir', fallback=os.path.join(Path.home(), '.srauslogs'))
-    if not os.path.exists(log_dir):
-        try:
-            os.makedirs(log_dir)
-        except OSError as e:
-            typer.echo(f"Error creating log directory {log_dir}: {e}", err=True)
-            raise typer.Exit(code=1)
+    # Initialize logging
+    setup_logging(log_dir)
 
-    log_file = os.path.join(log_dir, 'cmdline.log')
-    logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(message)s')
+    # Get the specific logger configured for command line logging
+    cmdline_logger = logging.getLogger('cmdline')
 
-    # Log the command line arguments
-    logging.info('Command Line: ' + ' '.join(sys.argv))
+    # Log the command line arguments using the specific logger
+    cmdline_logger.info('Command Line: ' + ' '.join(sys.argv))
 
     ctx.obj["LOG_DIR"] = log_dir
     ctx.obj["DRY_RUN"] = dry_run
@@ -86,6 +84,7 @@ app.command()(hello)
 app.command()(seskey)
 app.command()(updateMyIP)
 app.command()(configure)
+app.command()(listvtltapes)
 
 if __name__ == "__main__":
     app()

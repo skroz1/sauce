@@ -19,11 +19,17 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import typer
+from utils.logging import get_loggers
+
+# Get the loggers
+loggers = get_loggers()
 
 def hello():
     """
     A sample command that prints "Hello, world!".
     """
+    loggers['debug'].debug("Executing hello() subcommand")
+
     print("Hello, world!")
 
 if __name__ == "__main__":

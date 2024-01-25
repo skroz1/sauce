@@ -23,6 +23,11 @@ import os
 from pathlib import Path
 import typer
 
+from utils.logging import get_loggers
+
+# Get the loggers
+loggers = get_loggers()
+
 app = typer.Typer()
 
 def conceal_key(key):
@@ -44,6 +49,7 @@ def configure(
     """
     Interactively configure AWS credentials and default region, set a specific configuration, or delete a configuration key.
     """
+    loggers['debug'].debug("Executing configure() subcommand")
     config = configparser.ConfigParser()
     config_file_path = ctx.obj.get('CONFIG_FILE', os.path.join(Path.home(), ".sraus"))
 
