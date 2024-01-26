@@ -32,6 +32,7 @@ from ses_key import seskey
 from update_ip import updateMyIP
 from configure import configure
 from listvtltapes import listvtltapes
+from mktapes import mktapes
 
 app = typer.Typer()
 
@@ -85,6 +86,7 @@ app.command()(seskey)
 app.command()(updateMyIP)
 app.command()(configure)
 app.command()(listvtltapes)
+app.command()(mktapes)
 
 if __name__ == "__main__":
     app()
