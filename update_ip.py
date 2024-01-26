@@ -19,7 +19,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # update_ip.py
-# Module for the updateMyIP command in the sraus project.
+# Module for the updateMyIP command in the sauce project.
 
 import typer
 from utils import network

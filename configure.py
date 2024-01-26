@@ -51,7 +51,7 @@ def configure(
     """
     loggers['debug'].debug("Executing configure() subcommand")
     config = configparser.ConfigParser()
-    config_file_path = ctx.obj.get('CONFIG_FILE', os.path.join(Path.home(), ".sraus"))
+    config_file_path = ctx.obj.get('CONFIG_FILE', os.path.join(Path.home(), ".sauce"))
 
     # Check if the config file already exists
     if os.path.exists(config_file_path):

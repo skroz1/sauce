@@ -19,7 +19,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # utilities.py
-# This module provides various utility functions for the sraus project.
+# This module provides various utility functions for the sauce project.
 
 import calendar
 import shutil

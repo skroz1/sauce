@@ -65,6 +65,7 @@ def get_region_from_arn(arn):
         # Handle the case where the ARN is not correctly formatted
         print("Malformed ARN provided.")
         return None
+
 class Arn:
     def __init__(self, arn_str):
         """

@@ -45,7 +45,7 @@ def read_config(config_path):
 def main(
     ctx: typer.Context,
     config_file: str = typer.Option(
-        os.path.join(Path.home(), ".sraus"),
+        os.path.join(Path.home(), ".sauce"),
         "--config",
         "-c",
         help="Path to the configuration file."
@@ -66,7 +66,7 @@ def main(
     ctx.obj["CONFIG"] = config
 
     # Determine log directory and initialize logging
-    log_dir = logdir or config.get('logging', 'logdir', fallback=os.path.join(Path.home(), '.srauslogs'))
+    log_dir = logdir or config.get('logging', 'logdir', fallback=os.path.join(Path.home(), '.saucelogs'))
     # Initialize logging
     setup_logging(log_dir)
 
