@@ -26,9 +26,6 @@ from utils.logging import get_loggers
 from botocore.exceptions import ClientError
 import sys
 from datetime import datetime
-from utils.utilities import convert_bytes
-from datetime import datetime
-from datetime import datetime
 
 app = typer.Typer()
 
