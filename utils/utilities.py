@@ -138,3 +138,27 @@ def convert_bytes(size_in_bytes, unit="gib"):
         return size_in_bytes / units[unit]
     else:
         raise ValueError("Unrecognized unit. Use one of: 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB', 'TiB', 'PB', 'PiB', 'EB', 'EiB'.")
+
+# convert size to bytes in other units 
+def convert_size_to_bytes(size, unit):
+    unit=unit.lower()
+
+    units = {
+        "kb": 1000,
+        "kib": 1024,
+        "mb": 1000**2,
+        "mib": 1024**2,
+        "gb": 1000**3,
+        "gib": 1024**3,
+        "tb": 1000**4,
+        "tib": 1024**4,
+        "pb": 1000**5,
+        "pib": 1024**5,
+        "eb": 1000**6,
+        "eib": 1024**6,
+    }
+
+    if unit in units:
+        return size * units[unit]
+    else:
+        raise ValueError("Unrecognized unit. Use one of: 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB', 'TiB', 'PB', 'PiB', 'EB', 'EiB'.")
