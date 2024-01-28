@@ -28,8 +28,8 @@ from utils.logging import setup_logging
 
 # import commands
 from hello import hello         # for testing
-from ses_key import seskey
-from update_ip import updateMyIP
+from seskey import seskey
+from updatemyip import updatemyip
 from configure import configure
 from listvtltapes import listvtltapes
 from mktapes import mktapes
@@ -83,7 +83,7 @@ def main(
 
 app.command()(hello)
 app.command()(seskey)
-app.command()(updateMyIP)
+app.command()(updatemyip)
 app.command()(configure)
 app.command()(listvtltapes)
 app.command()(mktapes)

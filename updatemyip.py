@@ -19,7 +19,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # update_ip.py
-# Module for the updateMyIP command in the sauce project.
+# Module for the updatemyip command in the sauce project.
 
 import typer
 from utils import network
@@ -29,7 +29,7 @@ from utils.logging import get_loggers
 # Get the loggers
 loggers = get_loggers()
 
-def updateMyIP(ctx: typer.Context, hostname: str):
+def updatemyip(ctx: typer.Context, hostname: str):
     """
     Update the specified A record with the calling host's current IP.
     """
@@ -63,5 +63,5 @@ def updateMyIP(ctx: typer.Context, hostname: str):
         typer.echo(f"Error: {e}", err=True)
 
 if __name__ == "__main__":
-    typer.run(updateMyIP)
+    typer.run(updatemyip)
 
