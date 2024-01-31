@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+#
+import typer
+
+# comment out what you don't need
+#from utils import network
+#from utils import amazon
+#from route53 import route53
+from utils import utilities
+from utils.logging import get_loggers
+
+# Get the loggers
+loggers = get_loggers()
+
+# define your new command here
+# remember to update the typer.run() call at the bottom.
+def mynewcommand(ctx: typer.Context):
+    loggers['debug'].debug(f"Executing {__name__} subcommand")
+
+    dry_run = ctx.obj["DRY_RUN"]
+    quiet = ctx.obj["QUIET"]
+    force = ctx.obj["FORCE"]
+
+    try:
+        # do some stuff here.
+
+if __name__ == "__main__":
+    typer.run(mynewcommand)
+

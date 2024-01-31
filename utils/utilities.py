@@ -25,7 +25,6 @@ import calendar
 import shutil
 import datetime
 
-
 def get_terminal_width():
     """
     Return the width of the terminal window, if possible.
@@ -65,7 +64,7 @@ def format_time_period(year, month):
     tuple: A tuple containing the start and end dates in 'YYYY-MM-DD' format.
     """
     last_day = get_last_day_of_month(year, month)
-    start_date = first_day_of_month(year, month)
+    start_date = f"{year}-{month:02d}-01"  # Calculation to return the first day of the month
     end_date = f"{year}-{month:02d}-{last_day}"
     return start_date, end_date
 
@@ -162,3 +161,16 @@ def convert_size_to_bytes(size, unit):
         return size * units[unit]
     else:
         raise ValueError("Unrecognized unit. Use one of: 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB', 'TiB', 'PB', 'PiB', 'EB', 'EiB'.")
+
+def get_terminal_width():
+    """
+    Return the width of the terminal window, if possible.
+
+    Returns:
+    int: Width of the terminal or default value 80 if not determinable.
+    """
+    try:
+        return shutil.get_terminal_size().columns
+    except AttributeError:
+        # Default width if the terminal size cannot be determined
+        return 80

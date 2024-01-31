@@ -95,3 +95,22 @@ class Arn:
         Return the full ARN string.
         """
         return self.arn_str
+
+def check_aws_credentials(debug=False):
+    """
+    Check if AWS credentials are available and print them if debug mode is enabled.
+
+    Parameters:
+    debug (bool): If True, enables debug mode to print AWS Access Key.
+
+    Returns:
+    bool: True if AWS credentials are available, False otherwise.
+    """
+    try:
+        boto3.client('sts').get_caller_identity()
+        if debug:
+            aws_access_key = os.getenv('AWS_ACCESS_KEY_ID')
+            print(f"Debug: Using AWS Access Key: {aws_access_key}")
+        return True
+    except NoCredentialsError:
+        return False

@@ -33,6 +33,7 @@ from updatemyip import updatemyip
 from configure import configure
 from listvtltapes import listvtltapes
 from mktapes import mktapes
+from billing import billing
 
 app = typer.Typer()
 
@@ -87,6 +88,7 @@ app.command()(updatemyip)
 app.command()(configure)
 app.command()(listvtltapes)
 app.command()(mktapes)
+app.command()(billing)
 
 if __name__ == "__main__":
     app()
