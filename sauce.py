@@ -34,6 +34,7 @@ from configure import configure
 from listvtltapes import listvtltapes
 from mktapes import mktapes
 from billing import billing
+from status import status
 
 app = typer.Typer()
 
@@ -82,13 +83,13 @@ def main(
     ctx.obj["QUIET"] = quiet
     ctx.obj["FORCE"] = force
 
-app.command()(hello)
 app.command()(seskey)
 app.command()(updatemyip)
 app.command()(configure)
 app.command()(listvtltapes)
 app.command()(mktapes)
 app.command()(billing)
+app.command()(status)
 
 if __name__ == "__main__":
     app()
