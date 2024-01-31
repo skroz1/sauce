@@ -27,7 +27,6 @@ import logging
 from utils.logging import setup_logging
 
 # import commands
-from hello import hello         # for testing
 from seskey import seskey
 from updatemyip import updatemyip
 from configure import configure
