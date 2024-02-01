@@ -206,6 +206,7 @@ def fit_table_columns(terminal_width, data, headers, mincol, extwidth=3):
     if len(headers) < mincol:
         raise ValueError("Not enough columns in data to satisfy mincol requirement")
 
+    # why did I do this?
     def column_width(col):
         max_length = max(len(str(item)) for item in col)
         return max_length + 2  # Adding space for padding

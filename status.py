@@ -27,11 +27,19 @@ def status(ctx: typer.Context):
             typer.echo(f"AWS Connection Established. Account ID: {identity['Account']}, ARN: {identity['Arn']}")
             typer.echo(f"Current IP Address: {get_public_ip()}")
 
+            typer.echo("")
+
             typer.echo("CloudWatch Alarms Status:")
+            alarmcount=0
             for alarm in alarms_response['MetricAlarms']:
                 alarm_name = alarm['AlarmName']
                 alarm_state = alarm['StateValue']
-                typer.echo(f"Alarm Name: {alarm_name}, State: {alarm_state}")
+                alarm_reason = alarm['StateReason']
+                if alarm_state != 'OK':
+                    alarmcount += 1
+                    typer.echo(f"Alarm Name: {alarm_name}, State: {alarm_state} Reason: {alarm_reason}")
+            if alarmcount == 0:
+                typer.echo("No alarms in alarm state.")
 
     except NoCredentialsError:
         typer.echo("No AWS credentials found. Please configure them properly.")

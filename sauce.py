@@ -34,6 +34,7 @@ from listvtltapes import listvtltapes
 from mktapes import mktapes
 from billing import billing
 from status import status
+from sgstatus import sgstatus
 
 app = typer.Typer()
 
@@ -89,6 +90,7 @@ app.command()(listvtltapes)
 app.command()(mktapes)
 app.command()(billing)
 app.command()(status)
+app.command()(sgstatus)
 
 if __name__ == "__main__":
     app()
