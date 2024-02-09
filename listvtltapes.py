@@ -5,26 +5,20 @@ import boto3
 #from tabulate import tabulate
 from utils.utilities import get_terminal_width, fit_table_columns, convert_bytes
 from utils.logging import get_loggers
+from utils.amazon import get_aws_session, get_aws_client
 from botocore.exceptions import ClientError
 import sys
 from datetime import datetime
 from SauceData.handler import SauceData
 
-def my_subcommand(ctx: typer.Context):
-    data = [{"name": "Example", "value": 123}]  # Example data model
-    output_format = ctx.obj["OUTPUT_FORMAT"]
-    output_file = ctx.obj["OUTPUT_FILE"]
-    
-    data_output = SauceData(data, output_format, output_file)
-    data_output.output()
-
 app = typer.Typer()
 
-def list_tapes(gateway_arns=None):
+def list_tapes(ctx:typer.Context, gateway_arns: str=None) -> SauceData:
     tapes = SauceData()
     #headers = ["TapeBarcode", "TapeCreatedDate", "TapeSizeInBytes", "TapeStatus", "TapeUsedInBytes", "PoolId", "Worm", "PoolEntryDate", "GatewayARN"]
 
-    client = boto3.client('storagegateway')
+    #client = boto3.client('storagegateway')
+    client = get_aws_client(ctx, 'storagegateway')
     response = client.list_tapes()
     for tape_info in response['TapeInfos']:
         tape_arn = tape_info['TapeARN']
@@ -127,11 +121,13 @@ def listvtltapes(
     If gateway ARNs are provided, list tapes for those gateways.
     If no gateway ARNs are provided, list all tapes in the region.
     """
-    #headers, tapes = list_tapes(gateway_arns)
-    #headers = ["Tape Barcode", "Created Date", "Size in Bytes", "Status", "Used Bytes", "Pool ID", "WORM", "Pool Entry Date", "Tape ARN", "Gateway ARN"]
 
     # create SauceData object
-    tapedata = list_tapes(gateway_arns)
+    tapedata = list_tapes(ctx, gateway_arns)
+
+    # set the output format if OUTPUT is defined in ctx
+    if "OUTPUT" in ctx.obj and ctx.obj["OUTPUT"] is not None:
+        tapedata.output_format = ctx.obj["OUTPUT"]
 
     # Format the data for tabulation
     terminal_width = get_terminal_width()
