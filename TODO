@@ -1,10 +1,8 @@
-- Finish implementation of DataOutput module
-- Align configuration options with awc cli (e.g., --output from aws replacing --output-format)
-- Convert all subcommands to use DataOutput (which we should rename)
-	billing
-	sgstatus
-	status
-	configure (nothing to do?)
-	mktapes (nothing to do?)
-	seskey (Nothing to do?)
-	updatemyip (nothing to do?)
+- Finish implementation of SauceData module
+- Convert all subcommands to use SauceData.  Also redo aws client creation
+    billing (very tricky.  Will require implementation of column reordering and truncation)
+- Fix logging
+- Implement terminal width formatting and truncation in SauceData
+- sgstatus is failing when DescribeGatewayInformation is called against a stopped gateway.  Apparent
+  cause is an incorrect display of status information from describedgateways
+- migrate remaining standalone commands
