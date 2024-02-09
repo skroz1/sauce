@@ -48,24 +48,34 @@ class SauceData:
     def _str_json(self):
         return json.dumps(self.data, indent=4)
 
-    # output to csv.  if headerlabels is set, use it to remap the headers
     def _str_csv(self):
         if not self.data:
             return ""
         output = io.StringIO()
-        
-        # Determine the correct fieldnames after applying any header label remapping
-        fieldnames = self.headers if not self.headerlabels else [self.headerlabels.get(header, header) for header in self.headers]
-        
+
+        # Filter out headers that are mapped to None in headerlabels
+        if self.headerlabels:
+            fieldnames = [self.headerlabels.get(header, header) for header in self.headers if self.headerlabels.get(header, header) is not None]
+        else:
+            fieldnames = self.headers
+
         writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
-        
+
         for row in self.data:
-            # Remap the row keys based on self.headerlabels
-            remapped_row = {self.headerlabels.get(field, field): value for field, value in row.items()}
-            # Ensure the remapped row only includes keys that are in the writer's fieldnames
-            writer.writerow({key: remapped_row[key] for key in fieldnames if key in remapped_row})
-        
+            # Prepare data row, considering headerlabels remapping and skipping None mappings
+            remapped_row = {}
+            for field, value in row.items():
+                # Skip fields mapped to None
+                if self.headerlabels.get(field, field) is None:
+                    continue
+                new_key = self.headerlabels.get(field, field) if field in self.headerlabels else field
+                remapped_row[new_key] = value
+
+            # Write the row to CSV, ensuring only included keys are written
+            filtered_row = {key: remapped_row[key] for key in fieldnames if key in remapped_row}
+            writer.writerow(filtered_row)
+
         return output.getvalue()
 
     # output to a table.  if headerlabels is set, use it to remap the headers
@@ -73,29 +83,33 @@ class SauceData:
         if not self.data:
             return ""
         
-        # Directly use self.headers if no remapping is required
-        headers = self.headers
+        # Initialize an empty list for the final headers
+        final_headers = []
 
-        # Check if header labels should be applied
+        # Check if header labels should be applied and filter out None mappings
         if self.headerlabels:
-            # Apply remapping to headers
-            headers = [self.headerlabels.get(h, h) for h in headers]
+            # Apply remapping to headers and skip None mappings
+            for header in self.headers:
+                new_header = self.headerlabels.get(header, header)
+                if new_header is not None:  # Skip headers mapped to None
+                    final_headers.append(new_header)
+        else:
+            final_headers = self.headers
 
-        # Prepare the data for tabulation, remapping keys according to self.headerlabels
+        # Prepare the data for tabulation, considering the header labels
         remapped_data = []
         for row in self.data:
-            # Apply remapping to each row's keys
-            remapped_row = {self.headerlabels.get(k, k): v for k, v in row.items()}
-            # Ensure the remapped row is ordered according to the remapped headers
-            ordered_row = [remapped_row[h] for h in headers if h in remapped_row]
+            # Initialize an ordered list for the current row according to final_headers
+            ordered_row = []
+            for original_header in self.headers:
+                new_header = self.headerlabels.get(original_header, original_header)
+                if new_header in final_headers:
+                    # Append the value to ordered_row only if the new_header is not skipped
+                    ordered_row.append(row.get(original_header, ''))
             remapped_data.append(ordered_row)
-        
-        # Convert headers to the format expected by tabulate when dealing with a list of lists
-        headers = headers if self.headerlabels else "keys"
 
-        # Now call tabulate with the correctly prepared data and headers
-        return tabulate(remapped_data, headers=headers, tablefmt="presto")
-   
+        # Now call tabulate with the correctly prepared data and final_headers
+        return tabulate(remapped_data, headers=final_headers, tablefmt="presto")
 
 def generate_headers(data):
     newheaders = []
