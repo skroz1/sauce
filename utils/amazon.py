@@ -4,6 +4,8 @@ import re
 import os
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
+import typer
+from typer.models import Context
 
 def build_arn(service, resource_type, resource_id, partition='aws', region=None):
     """
@@ -96,3 +98,51 @@ def check_aws_credentials(debug=False):
         return True
     except NoCredentialsError:
         return False
+
+### Connection, client, and session management
+def build_aws_session (profile_name="default"):
+    """
+    Build a boto3 session using the given profile name.
+
+    :param profile_name: The name of the AWS CLI profile to use (default: "default").
+    :return: A boto3 session object.
+    """
+    session = boto3.Session(profile_name=profile_name)
+
+    # raise an error if the session is invalid
+    if session is None:
+        raise ValueError("Invalid AWS session")
+
+    return session
+
+def get_aws_session ( ctx: typer.Context):
+    """
+    Refresh the boto3 session using the given profile name.
+
+    :param ctx: The Typer context object.
+    :return: A boto3 session object.
+    """
+    if "AWS_SESSION" not in ctx.obj:
+        # Get profile name from PROFILE in ctx or use "default"
+        profile_name = ctx.obj.get("PROFILE", "default")
+        ctx.obj["AWS_SESSION"] = build_aws_session(profile_name)
+    else:
+        # verify the session is valid/active
+        try:
+            ctx.obj["AWS_SESSION"].client("sts").get_caller_identity()
+        except NoCredentialsError:
+            # if the session is invalid, rebuild it
+            ctx.obj["AWS_SESSION"] = build_aws_session(profile_name)
+    
+    return ctx.obj["AWS_SESSION"]
+
+def get_aws_client (ctx: typer.Context, service_name: str):
+    """
+    Get a boto3 client using the given service name.
+
+    :param ctx: The Typer context object.
+    :param service_name: The name of the AWS service to use.
+    :return: A boto3 client object.
+    """
+    session = get_aws_session(ctx)
+    return session.client(service_name)
