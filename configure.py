@@ -24,7 +24,7 @@ def conceal_key(key):
 @app.command()
 def configure(
     ctx: typer.Context,
-    setting: str = typer.Argument(None, help="Configuration in the format variable=value."),
+    setting: str = typer.Argument(None, help="Configuration in INI format."),
     section: str = typer.Option("global", "--section", "-s", help="The section of the config file to edit."),
     delete: str = typer.Option(None, "--delete", "-d", help="Delete a specific configuration key.")
 ):
@@ -59,6 +59,12 @@ def configure(
     else:
         # Interactive configuration
         if section == "global":
+            typer.echo("Note: Most global configuration parameters are set by \"aws configure\" command.")
+            default_output = config[section].get('output', 'json')
+            config[section]['output'] = typer.prompt("Default output format (sauce only)", default=default_output)
+
+            """
+            # all of this has been removed, as it chould be done with the AWS CLI
             current_access_key = config[section].get('aws_access_key', '')
             current_secret_key = config[section].get('aws_secret_access_key', '')
             entered_access_key = typer.prompt("AWS Access Key", default=conceal_key(current_access_key))
@@ -67,6 +73,7 @@ def configure(
             config[section]['aws_secret_access_key'] = current_secret_key if entered_secret_key == conceal_key(current_secret_key) else entered_secret_key
             default_region = config[section].get('region', 'us-east-1')
             config[section]['region'] = typer.prompt("Default region name", default=default_region)
+            """
 
     # Write the configuration to file
     with open(config_file_path, 'w') as configfile:
