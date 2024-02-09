@@ -130,3 +130,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# specific extra stuff
+old_dnstool.pl
+tests/*.key
+tests/testhost
+*.code-workspace
+pyvenv.cfg

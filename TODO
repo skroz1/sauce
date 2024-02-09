@@ -1,0 +1,10 @@
+- Finish implementation of DataOutput module
+- Align configuration options with awc cli (e.g., --output from aws replacing --output-format)
+- Convert all subcommands to use DataOutput (which we should rename)
+	billing
+	sgstatus
+	status
+	configure (nothing to do?)
+	mktapes (nothing to do?)
+	seskey (Nothing to do?)
+	updatemyip (nothing to do?)

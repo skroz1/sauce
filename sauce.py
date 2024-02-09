@@ -1,22 +1,4 @@
 #!/usr/bin/env python3
-#
-# name - desc
-#
-# Copyright (C) 2014 Scott F. Crosby <skroz1@gmail.com>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os
 import sys
@@ -27,6 +9,7 @@ import logging
 from utils.logging import setup_logging
 
 # import commands
+import typer
 from seskey import seskey
 from updatemyip import updatemyip
 from configure import configure
@@ -35,6 +18,38 @@ from mktapes import mktapes
 from billing import billing
 from status import status
 from sgstatus import sgstatus
+from typing import Optional
+from pathlib import Path
+import configparser
+import logging
+from typing import Optional
+from utils.logging import setup_logging
+from configure import configure
+from billing import billing
+from listvtltapes import listvtltapes
+from mktapes import mktapes
+from seskey import seskey
+from sgstatus import sgstatus
+from status import status
+from updatemyip import updatemyip
+#from utils.output_handler import handle_output  # You will create this module and function
+
+app = typer.Typer()
+
+@app.callback()
+def main(
+    ctx: typer.Context,
+    config_file: str = typer.Option(os.path.join(Path.home(), ".sraus"), "--config", "-c", help="Path to the configuration file."),
+    output_format: str = typer.Option("table", "--output-format", "-O", help="Output format (default: table)."),
+    output_file: Optional[str] = typer.Option(None, "--output-file", "-o", help="Output file name (default: STDOUT)."),
+    # ... other global options ...
+):
+    ctx.ensure_object(dict)
+    ctx.obj["OUTPUT_FORMAT"] = output_format
+    ctx.obj["OUTPUT_FILE"] = output_file
+    # ... other context setup ...
+
+
 
 app = typer.Typer()
 
@@ -59,7 +74,10 @@ def main(
     ),
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Perform a dry run without making any changes."),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress all non-error output."),
-    force: bool = typer.Option(False, "--force", "-f", help="Force update even if not recommended.")
+    force: bool = typer.Option(False, "--force", "-f", help="Force update even if not recommended."),
+    output_format: str = typer.Option("table", "--output-format", help="Output format (default: table)."),
+    output_file: Optional[str] = typer.Option(None, "--output-file", "-o", help="Output file name (default: STDOUT)."),
+
 ):
     ctx.ensure_object(dict)
 
@@ -82,6 +100,8 @@ def main(
     ctx.obj["DRY_RUN"] = dry_run
     ctx.obj["QUIET"] = quiet
     ctx.obj["FORCE"] = force
+    ctx.obj["FORMAT"] = output_format
+    ctx.obj["OFILE"] = output_file
 
 app.command()(seskey)
 app.command()(updatemyip)
