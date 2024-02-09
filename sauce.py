@@ -36,23 +36,6 @@ from updatemyip import updatemyip
 
 app = typer.Typer()
 
-@app.callback()
-def main(
-    ctx: typer.Context,
-    config_file: str = typer.Option(os.path.join(Path.home(), ".sraus"), "--config", "-c", help="Path to the configuration file."),
-    output_format: str = typer.Option("table", "--output-format", "-O", help="Output format (default: table)."),
-    output_file: Optional[str] = typer.Option(None, "--output-file", "-o", help="Output file name (default: STDOUT)."),
-    # ... other global options ...
-):
-    ctx.ensure_object(dict)
-    ctx.obj["OUTPUT_FORMAT"] = output_format
-    ctx.obj["OUTPUT_FILE"] = output_file
-    # ... other context setup ...
-
-
-
-app = typer.Typer()
-
 def read_config(config_path):
     config = configparser.ConfigParser()
     config.read(config_path)
@@ -75,9 +58,9 @@ def main(
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Perform a dry run without making any changes."),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress all non-error output."),
     force: bool = typer.Option(False, "--force", "-f", help="Force update even if not recommended."),
-    output_format: str = typer.Option("table", "--output-format", help="Output format (default: table)."),
+    output_format: str = typer.Option("table", "--output", help="Output format (default: table)."),
     output_file: Optional[str] = typer.Option(None, "--output-file", "-o", help="Output file name (default: STDOUT)."),
-
+    aws_profile: Optional[str] = typer.Option("default", "--profile", help="AWS CLI profile name (default: default).")
 ):
     ctx.ensure_object(dict)
 
@@ -100,8 +83,9 @@ def main(
     ctx.obj["DRY_RUN"] = dry_run
     ctx.obj["QUIET"] = quiet
     ctx.obj["FORCE"] = force
-    ctx.obj["FORMAT"] = output_format
+    ctx.obj["OUTPUT"] = output_format
     ctx.obj["OFILE"] = output_file
+    ctx.obj["PROFILE"] = aws_profile
 
 app.command()(seskey)
 app.command()(updatemyip)
