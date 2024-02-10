@@ -7,6 +7,7 @@ import calendar
 import shutil
 import datetime
 
+# moved to SauceData/handler.py.  Delete it once all references are removed
 def get_terminal_width():
     """
     Return the width of the terminal window, if possible.
@@ -143,16 +144,3 @@ def convert_size_to_bytes(size, unit):
         return size * units[unit]
     else:
         raise ValueError("Unrecognized unit. Use one of: 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB', 'TiB', 'PB', 'PiB', 'EB', 'EiB'.")
-
-def get_terminal_width():
-    """
-    Return the width of the terminal window, if possible.
-
-    Returns:
-    int: Width of the terminal or default value 80 if not determinable.
-    """
-    try:
-        return shutil.get_terminal_size().columns
-    except AttributeError:
-        # Default width if the terminal size cannot be determined
-        return 80
