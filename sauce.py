@@ -24,6 +24,7 @@ import configparser
 import logging
 from typing import Optional
 from utils.logging import setup_logging
+from utils.amazon import get_aws_session
 from configure import configure
 from billing import billing
 from listvtltapes import listvtltapes
@@ -67,6 +68,9 @@ def main(
     # Read config file
     config = read_config(config_file)
     ctx.obj["CONFIG"] = config
+
+    # set up boto3 session
+    ctx.obj["AWS_SESSION"] = get_aws_session(ctx) 
 
     # Determine log directory and initialize logging
     log_dir = logdir or config.get('logging', 'logdir', fallback=os.path.join(Path.home(), '.saucelogs'))
