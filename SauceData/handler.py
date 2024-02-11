@@ -22,6 +22,14 @@ class SauceData:
                 prioritize_columns=[]
 
     ):
+        # verify the imported data is a list of dictionaries
+        try:
+            # Ensure data is a list of dictionaries
+            if not all(isinstance(item, dict) for item in data):
+                raise ValueError("All items in the data list must be dictionaries.")
+            self.data = data
+        except Exception as e:
+            raise ValueError(f"Invalid data: {e}")
 
         self.data = data
         self.output_format = output_format
@@ -47,19 +55,14 @@ class SauceData:
         self.headerlabels = {}
     
     def append(self, newdata):
-        #self.data.append(newdata)
-        # verify newdata is a dict and return ValueError if not
         if not isinstance(newdata, dict):
-            raise ValueError(f"Data must be a dictionary, not {type(newdata)}")
+            raise ValueError(f"Data must be a dictionary, not {type(newdata).__name__}")
         
-        # check headers.  any headers in newdata but not in self.headers should be added to 
-        # self.headers
         for key in newdata.keys():
             if key not in self.headers:
                 self.headers.append(key)
-        # append newdata to self.data
+        
         self.data.append(newdata)
-        return self.data
 
     def __str__(self):
         if self.output_file:
@@ -151,6 +154,41 @@ class SauceData:
 
         # Generate table string with tabulate
         return tabulate(remapped_data, headers=final_headers, tablefmt=self.table_format)
+
+    def sort_data(self, sort_by):
+        """
+        Sorts the data based on specified columns and directions.
+
+        Parameters:
+        sort_by (list of tuples): Each tuple contains the column name followed by the sort direction ('asc' or 'desc').
+        """
+        if not sort_by:
+            return  # No sorting if sort_by is empty or None
+
+        # Build a list of keys for sorting, with reverse flags for each key based on sort direction
+        sort_keys = [(lambda row, key=key: row.get(key, ""), reverse) for key, direction in sort_by for reverse in (direction.lower() == 'desc',)]
+        
+        self.data.sort(key=lambda row: tuple(key(row) for key, reverse in sort_keys), reverse=any(reverse for _, reverse in sort_keys))
+
+    def filter_data(self, conditions):
+        """
+        Filters the data based on specified conditions with error handling.
+
+        Parameters:
+        conditions (list of functions): Each function takes a row (dict) as input and returns True if the row meets the condition.
+        """
+        if not conditions:
+            return  # No filtering if conditions are empty or None
+
+        filtered_data = []
+        for row in self.data:
+            try:
+                if all(condition(row) for condition in conditions):
+                    filtered_data.append(row)
+            except Exception as e:
+                print(f"Error applying filter conditions to row {row}: {e}")
+        self.data = filtered_data
+
 
 ###
 ### Helper functions

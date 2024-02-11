@@ -237,5 +237,38 @@ class TestSauceData(unittest.TestCase):
         # verify the width of the table is less than or equal to the terminal width
         self.assertLessEqual(table_width, terminal_width)
 
+    def test_sort_data(self):
+        # Initialize SauceData with test data
+        sauce_data = SauceData(data=self.test_data)
+        
+        # Sort data by a specific column in ascending order
+        sauce_data.sort_data([('key1', 'asc')])
+        # Verify that data is sorted correctly
+        sorted_keys = [row['key1'] for row in sauce_data.data]
+        self.assertEqual(sorted_keys, sorted(sorted_keys))
+        
+        # Sort data by the same column in descending order
+        sauce_data.sort_data([('key1', 'desc')])
+        # Verify that data is sorted correctly in descending order
+        sorted_keys_desc = [row['key1'] for row in sauce_data.data]
+        self.assertEqual(sorted_keys_desc, sorted(sorted_keys_desc, reverse=True))
+
+    def test_filter_data(self):
+        # Initialize SauceData with test data
+        sauce_data = SauceData(data=self.test_data)
+        
+        # Define a threshold for filtering
+        threshold = 5  # Adjust this value based on the actual test data and requirements
+        
+        # Filter data with a condition that checks if the value is numeric and then compares it
+        sauce_data.filter_data([
+            lambda row: row['key1'].isdigit() and int(row['key1']) > threshold if 'key1' in row else False
+        ])
+        
+        # Verify that all remaining rows meet the condition
+        for row in sauce_data.data:
+            self.assertTrue(int(row['key1']) > threshold)
+
+
 if __name__ == '__main__':
     unittest.main()
