@@ -78,7 +78,7 @@ def sgstatus(ctx: typer.Context):
 
     #headers_dict = dict(zip(headers, headers))
     #print(tabulate(gwdata, headers_dict, tablefmt="presto"))
-    print (json.dumps(gwdata.headers, indent=2  ))
+    #print (json.dumps(gwdata.headers, indent=2  ))
     print(gwdata)
 
 if __name__ == "__main__":
