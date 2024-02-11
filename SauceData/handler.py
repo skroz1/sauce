@@ -18,7 +18,9 @@ class SauceData:
                 datatype="simple", 
                 output_format='table', 
                 output_file=None, 
-                table_format="presto"
+                table_format="presto",
+                prioritize_columns=[]
+
     ):
 
         self.data = data
@@ -33,7 +35,9 @@ class SauceData:
         # Truncate the table if it's too wide by default
         self.width = get_terminal_width()
         self.truncate = True
-            
+        
+        self.prioritize_columns = prioritize_columns
+
         # verify the table format is valid
         if table_format not in tabletypes:
             raise ValueError(f"Invalid table format: {table_format}")
@@ -121,45 +125,31 @@ class SauceData:
         if not self.data:
             return ""
         
-        # Initialize final_headers as an empty list
-        final_headers = []
+        # Initial headers based on data keys
+        final_headers = self.headers[:]
 
-        # Check if header labels should be applied and filter out None mappings
-        if self.headerlabels:
-            # Iterate over the headerlabels dict to preserve key order
-            for header_label_key in self.headerlabels.keys():
-                # Check if the current key is in self.headers
-                if header_label_key in self.headers:
-                    # Get the new header name using the current key
-                    new_header = self.headerlabels[header_label_key]
-                    # If the new header name is not None, add it to final_headers
-                    if new_header is not None:
-                        final_headers.append(new_header)
-                else:
-                    # If the header_label_key is not in self.headers but has a valid mapping, add the mapping
-                    if self.headerlabels[header_label_key] is not None:
-                        final_headers.append(self.headerlabels[header_label_key])
-        else:
-            # If there are no header labels, use the original headers
-            final_headers = self.headers
+        # Apply header labels, dropping columns with None value
+        final_headers = [self.headerlabels.get(header, header) for header in final_headers if self.headerlabels.get(header, header) is not None]
 
-        # Prepare the data for tabulation, considering the header labels
+        # Prioritize columns, ensuring prioritized columns come first
+        # Note: Prioritization happens after dropping columns flagged with None
+        prioritized_headers = [col for col in self.prioritize_columns if col in final_headers]
+        other_headers = [col for col in final_headers if col not in self.prioritize_columns]
+        final_headers = prioritized_headers + other_headers
+
+        # Convert data to a list of lists format, considering dropped columns
         remapped_data = []
         for row in self.data:
-            # Initialize an ordered list for the current row according to final_headers
-            ordered_row = []
-            for original_header in self.headers:
-                new_header = self.headerlabels.get(original_header, original_header)
-                if new_header in final_headers:
-                    # Append the value to ordered_row only if the new_header is not skipped
-                    ordered_row.append(row.get(original_header, ''))
-            remapped_data.append(ordered_row)
+            row_data = [row.get(header, '') for header in self.headers if self.headerlabels.get(header, header) is not None]
+            remapped_data.append(row_data)
 
         # Fit the table columns to the terminal width if truncate is enabled
         if self.truncate:
-            remapped_data, final_headers = fit_table_columns(self.width, remapped_data, final_headers, mincol=3)
+            remapped_data, adjusted_final_headers = fit_table_columns(self.width, remapped_data, final_headers, self.mincol)
+            # Adjust headers in line with the data after truncation
+            final_headers = [final_headers[i] for i in range(len(adjusted_final_headers))]
 
-        # Now call tabulate with the correctly prepared data and final_headers
+        # Generate table string with tabulate
         return tabulate(remapped_data, headers=final_headers, tablefmt=self.table_format)
 
 ###
@@ -187,96 +177,37 @@ def get_terminal_width():
         # Default width if the terminal size cannot be determined
         return 80
 
-# new version of fit_table_columns
-def new_fit_table_columns(terminal_width, data, headers, mincol, extwidth=3):
+def fit_table_columns(terminal_width, data, headers, mincol, extwidth=2):
     """
-    Fit the table columns to the terminal width for data in the form of an array of dicts.
-    
-    Parameters:
-    terminal_width (int): The width of the terminal.
-    data (list of dicts): The data to be displayed in the table, where each row is a dict.
-    headers (list): The headers for the table, determining column order.
-    mincol (int): The minimum number of columns to display on the left.
-    extwidth (int): The extra width to add to each column to account for the table borders.
-    
-    Returns:
-    tuple: A tuple of truncated data (list of dicts) and headers (list).
-    """
-    if len(headers) < mincol:
-        raise ValueError("Not enough columns in data to satisfy mincol requirement")
-
-    def column_width(col_data):
-        max_length = max(len(str(item)) for item in col_data)
-        return max_length + extwidth
-
-    # Calculate initial widths for mincol columns
-    total_width = sum(column_width([row[header] for row in data]) for header in headers[:mincol])
-    
-    new_data = []
-    new_headers = headers[:mincol]
-
-    # Try to add remaining columns if they fit within terminal_width
-    for header in headers[mincol:]:
-        col_data = [row[header] for row in data]
-        col_width = column_width(col_data)
-
-        if total_width + col_width > terminal_width:
-            break  # Stop adding columns if next one exceeds terminal_width
-
-        new_headers.append(header)
-        total_width += col_width
-
-    # Truncate data dicts based on the new headers
-    for row in data:
-        truncated_row = {header: row[header] for header in new_headers}
-        new_data.append(truncated_row)
-
-    return new_data, new_headers
-
-# old version of fit_table_columns
-def fit_table_columns(terminal_width, data, headers, mincol, extwidth=3):
-    """
-    Fit the table columns to the terminal width.
+    Adjust columns to fit within the terminal width for data formatted as a list of lists.
 
     Parameters:
     terminal_width (int): The width of the terminal.
-    data (list): The data to be displayed in the table.
+    data (list of lists): The data to be displayed in the table, each sublist is a row.
     headers (list): The headers for the table.
-    mincol (int): The minimum number of columns to display on the left. Used for service name, totals, etc.
-    extwidth (int): The extra width to add to each column to account for the table borders.
+    mincol (int): The minimum number of columns to display on the left.
+    extwidth (int): The extra width to add to each column to account for padding and spacing.
 
     Returns:
-    tuple: A tuple of fitted data list and headers for tabulation.
+    tuple: Adjusted data (list of lists) and headers (list) fitting within the terminal width.
     """
-    if len(headers) < mincol:
-        raise ValueError("Not enough columns in data to satisfy mincol requirement")
+    # Determine the width of each column based on content
+    col_widths = [max(len(str(item)) for item in col) + extwidth for col in zip(*data, headers)]
 
-    def column_width(col):
-        max_length = max(len(str(item)) for item in col)
-        return max_length + 2  # Adding space for padding
+    # Start with the minimum required columns
+    total_width = sum(col_widths[:mincol])
+    included_cols = mincol
 
-    new_data = [row[:mincol] for row in data]
-    new_headers = headers[:mincol]
-    width_debug_row = ['Width']  # Debug row to show the width of each column
-
-    total_width = sum(column_width(col) + extwidth for col in zip(*new_data)) + len(new_headers) - 1
-
-    remaining_cols = list(range(mincol, len(headers)))[::-1]
-
-    for i in remaining_cols:
-        col = [row[i] for row in data]
-        col_width = column_width(col) + extwidth
-
-        if total_width + col_width > terminal_width:
+    # Add more columns as space allows
+    for width in col_widths[mincol:]:
+        if total_width + width <= terminal_width:
+            included_cols += 1
+            total_width += width
+        else:
             break
 
-        for row, item in zip(new_data, col):
-            row.append(item)
-        new_headers.append(headers[i])
-        width_debug_row.append(str(col_width))
-        total_width += col_width
+    # Adjust headers and data based on included columns
+    adjusted_headers = headers[:included_cols]
+    adjusted_data = [row[:included_cols] for row in data]
 
-    # debug row
-    #new_data.append(width_debug_row)
-
-    return new_data, new_headers
+    return adjusted_data, adjusted_headers
