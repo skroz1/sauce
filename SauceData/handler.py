@@ -31,7 +31,7 @@ class SauceData:
         except Exception as e:
             raise ValueError(f"Invalid data: {e}")
 
-        self.data = data
+        #self.data = data
         self.output_format = output_format
         self.output_file = output_file
         self.datatype = datatype
