@@ -5,4 +5,8 @@
 - Implement terminal width formatting and truncation in SauceData
 - sgstatus is failing when DescribeGatewayInformation is called against a stopped gateway.  Apparent
   cause is an incorrect display of status information from describedgateways
+- Passing configuration data into SauceData needs a rework.  It's inconsistent and inefficient, 
+  requiring that each command be touched every time there's an update to the SauceData object.
 - migrate remaining standalone commands
+- inject some sanity into how the various modules are built and imported.  Lots of legacy cruft from
+  different scripts being smooshed together.
