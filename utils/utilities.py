@@ -51,6 +51,7 @@ def format_time_period(year, month):
     end_date = f"{year}-{month:02d}-{last_day}"
     return start_date, end_date
 
+# moved and rewritten for SauceData/handler.py.  Delete it once all references are removed
 def fit_table_columns(terminal_width, data, headers, mincol, extwidth=3):
     """
     Fit the table columns to the terminal width.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#
+
 import typer
 import os
 import sys
@@ -10,6 +10,7 @@ import calendar
 import argparse
 import getpass
 import configparser
+import json
 
 from tabulate import tabulate
 from datetime import datetime
@@ -18,12 +19,18 @@ from utils import amazon
 from utils import utilities
 from utils.logging import get_loggers
 from utils.utilities import get_terminal_width, get_last_day_of_month, format_time_period
+from utils.amazon import get_aws_session, get_aws_client
+
+app = typer.Typer()
 
 # Get the loggers
 loggers = get_loggers()
 
+# Define exit codes
+EXIT_CODE_GENERAL_ERROR = 1
+EXIT_CODE_AWS_DATA_RETRIEVAL_ERROR = 2
 
-def get_aws_cost_for_period(start_date, end_date, granularity, group_by=None):
+def get_aws_cost_for_period(ctx:typer.Context, start_date, end_date, granularity, group_by=None):
     """
     Retrieve AWS cost and usage data for a specified time period with enhanced exception handling.
 
@@ -36,7 +43,8 @@ def get_aws_cost_for_period(start_date, end_date, granularity, group_by=None):
     Returns:
     dict: The response containing cost and usage data.
     """
-    client = boto3.client('ce')
+    client = get_aws_client(ctx, 'ce')
+
     args = {
         'TimePeriod': {'Start': start_date, 'End': end_date},
         'Granularity': granularity,
@@ -237,6 +245,7 @@ def fit_table_columns(terminal_width, data, headers, mincol, extwidth=3):
 
     return new_data, new_headers
 
+@app.command()
 def billing(ctx: typer.Context, format: str = typer.Argument("summary")):
     loggers['debug'].debug(f"Executing {__name__}() subcommand")
 
@@ -253,21 +262,21 @@ def billing(ctx: typer.Context, format: str = typer.Argument("summary")):
     group_by = [{'Type': 'DIMENSION', 'Key': 'SERVICE'}]
 
     if format == 'detail':
-        current_month_response = get_aws_cost_for_period(current_month_start, current_month_end, granularity, group_by)
+        current_month_response = get_aws_cost_for_period(ctx, current_month_start, current_month_end, granularity, group_by)
         if current_month_response is None:
             print("Failed to retrieve AWS cost data.", file=sys.stderr)
             sys.exit(EXIT_CODE_AWS_DATA_RETRIEVAL_ERROR)
         data, headers = detailed_data(current_month_response)
         print(tabulate(data, headers, tablefmt="plain"))
     elif format == 'daily':
-        current_month_response = get_aws_cost_for_period(current_month_start, current_month_end, granularity, group_by)
+        current_month_response = get_aws_cost_for_period(ctx, current_month_start, current_month_end, granularity, group_by)
         if current_month_response is None:
             print("Failed to retrieve AWS cost data.", file=sys.stderr)
             sys.exit(EXIT_CODE_AWS_DATA_RETRIEVAL_ERROR)
         data, headers = daily_data(current_month_response, now)
         print(tabulate(data, headers, tablefmt="plain"))
     elif format == 'table':
-        current_month_response = get_aws_cost_for_period(current_month_start, current_month_end, granularity, group_by)
+        current_month_response = get_aws_cost_for_period(ctx, current_month_start, current_month_end, granularity, group_by)
         if current_month_response is None:
             print("Failed to retrieve AWS cost data.", file=sys.stderr)
             sys.exit(EXIT_CODE_AWS_DATA_RETRIEVAL_ERROR)
@@ -275,12 +284,12 @@ def billing(ctx: typer.Context, format: str = typer.Argument("summary")):
         fitted_data, fitted_headers = fit_table_columns(get_terminal_width(), data, headers, mincol=2, extwidth=3)
         print(tabulate(fitted_data, fitted_headers, tablefmt="presto"))
     elif format == 'summary':
-        current_month_response = get_aws_cost_for_period(current_month_start, current_month_end, granularity, group_by)
+        current_month_response = get_aws_cost_for_period(ctx, current_month_start, current_month_end, granularity, group_by)
         if current_month_response is None:
             print("Failed to retrieve AWS cost data.", file=sys.stderr)
             sys.exit(EXIT_CODE_AWS_DATA_RETRIEVAL_ERROR)
         summary_data(current_month_response)
 
 if __name__ == "__main__":
-    typer.run(seskey)
+    typer.run(billing)
 

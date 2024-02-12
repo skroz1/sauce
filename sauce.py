@@ -9,7 +9,6 @@ import logging
 from utils.logging import setup_logging
 
 # import commands
-import typer
 from seskey import seskey
 from updatemyip import updatemyip
 from configure import configure
@@ -25,6 +24,8 @@ import logging
 from typing import Optional
 from utils.logging import setup_logging
 from utils.amazon import get_aws_session
+
+# subcommands
 from configure import configure
 from billing import billing
 from listvtltapes import listvtltapes
@@ -33,7 +34,13 @@ from seskey import seskey
 from sgstatus import sgstatus
 from status import status
 from updatemyip import updatemyip
+
+# newbilling has its own subcommands and is imported as a separate app
+from newbilling import app as newbilling_app
+
 #from utils.output_handler import handle_output  # You will create this module and function
+
+
 
 app = typer.Typer()
 
@@ -99,6 +106,10 @@ app.command()(mktapes)
 app.command()(billing)
 app.command()(status)
 app.command()(sgstatus)
+
+# again, newbilling has its own subcommands and is imported as a separate app
+app.add_typer(newbilling_app, name="newbilling")
+
 
 if __name__ == "__main__":
     app()
