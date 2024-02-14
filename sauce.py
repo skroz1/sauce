@@ -24,6 +24,7 @@ import logging
 from typing import Optional
 from utils.logging import setup_logging
 from utils.amazon import get_aws_session
+import locale
 
 # subcommands
 from configure import configure
@@ -90,6 +91,10 @@ def main(
     # Log the command line arguments using the specific logger
     cmdline_logger.info('Command Line: ' + ' '.join(sys.argv))
 
+    mylocale = config.get('general', 'locale', fallback=None)
+    if not mylocale:
+        mylocale = locale.getdefaultlocale()[0] or 'en_US'
+
     ctx.obj["LOG_DIR"] = log_dir
     ctx.obj["DRY_RUN"] = dry_run
     ctx.obj["QUIET"] = quiet
@@ -97,6 +102,7 @@ def main(
     ctx.obj["OUTPUT"] = output_format
     ctx.obj["OFILE"] = output_file
     ctx.obj["PROFILE"] = aws_profile
+    ctx.obj["LOCALE"] = mylocale
 
 app.command()(seskey)
 app.command()(updatemyip)
