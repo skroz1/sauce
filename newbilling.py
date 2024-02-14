@@ -2,6 +2,7 @@
 
 import typer
 import logging
+import json
 from boto3.session import Session
 from SauceData.handler import SauceData
 from typing import Optional
@@ -10,9 +11,13 @@ from datetime import datetime, timedelta
 
 from utils.utilities import get_last_day_of_month, format_time_period
 
-from babel.numbers import format_currency
+import locale
+from babel.numbers import format_currency, get_territory_currencies
+from babel import Locale
 
 app = typer.Typer(help="New AWS billing commands.")
+
+
 
 ### Utiulity functions
 def fetch_current_billing(ce_client, start_date, end_date, granularity='MONTHLY'):
@@ -93,6 +98,29 @@ def usage_by_service(ce_client, start_date: str, end_date: str) -> dict:
         logging.getLogger('newbilling').error(f"Error fetching usage by service: {e}")
         return {}
 
+def prefill_date_headers(start_date_str: str, end_date_str: str) -> list:
+    """
+    Generate a list of dates in DD-MMM format for every day between start_date and end_date, inclusive.
+    Both start_date and end_date should be strings in the format %Y-%m-%d.
+
+    Args:
+    start_date_str (str): The start date in %Y-%m-%d format.
+    end_date_str (str): The end date in %Y-%m-%d format.
+
+    Returns:
+    list: A list of dates in the specified range in DD-MMM format.
+    """
+    # Convert strings to datetime objects
+    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    
+    # Calculate the number of days in the range
+    num_days = (end_date - start_date).days + 1
+    
+    # Generate the list of dates
+    date_list = [(start_date + timedelta(days=i)).strftime('%d-%b') for i in range(num_days)]
+    
+    return date_list
 
 ###
 ### Subcommands
@@ -109,21 +137,63 @@ def mtd(ctx: typer.Context):
     year, month = today.year, today.month
     start_of_month, _ = format_time_period(year, month)
 
-    # Fetch usage by service
-    service_usage = usage_by_service(ce_client, start_of_month, today.strftime('%Y-%m-%d'))
+    # add one day to today
+    tomorrow = today + timedelta(days=1)
+
+    # Fetch usage by service.  specify dates in iso format
+    service_usage = usage_by_service(ce_client, start_of_month, tomorrow.strftime('%Y-%m-%d'))
+
+    # Create a SauceData object and pre-fill headers with dates in DD-MMM format
+    date_headers = prefill_date_headers(start_of_month, today.strftime('%Y-%m-%d'))
+    sauce_data = SauceData(data=[])
+    sauce_data.headers = ['Service', 'Total'] + date_headers[::-1]
+
+    # Initialize a dictionary to keep track of total costs per date
+    total_costs = {date: 0 for date in date_headers}
+    total_costs['Total'] = 0
+
+    # We'll need the currency and locale.  Do this once.
+    currency = None
+    mylocale = ctx.obj['LOCALE'] or 'en_US'
     
-    # create a SauceData object and populate it with service_usage
-    sd = SauceData()
-    # for each service create a new dict, populate it with the usage data by day
-
-
-    # Convert the service_usage data into a format that can be easily displayed
-    # This part can be customized based on how you want to display the data (e.g., using SauceData for tabulation)
+    # Extract and format each row
     for service, daily_data in service_usage.items():
-        print(f"Service: {service}")
+        row = {'Service': service, 'Total': sum(float(daily['Amount']) for daily in daily_data)}
         for daily in daily_data:
-            print(f"  Date: {daily['Date']}, Amount: ${float(daily['Amount']):.2f}")
-        print("-" * 40)  # Separator for readability
+            # find the currency unit or default to USD
+            # TODO cost forecast gives a currency unit, but cost and usage does not
+            if not currency:
+                currency = "USD"
+
+            date_str = datetime.strptime(daily['Date'], '%Y-%m-%d').strftime('%d-%b')
+            # Convert Amount to a float in the correct currency and add it (unconverted) to the
+            # totals
+            #row[date_str] = float(daily['Amount'])
+            row[date_str] = format_currency(float(daily['Amount']), currency, locale=mylocale)
+            total_costs[date_str] += float(daily['Amount'])
+            total_costs['Total'] += float(daily['Amount'])
+        # Convert the total amount to a formatted currency string
+        row['Total'] = format_currency(row['Total'], currency, locale=mylocale)
+        sauce_data.append(row)
+
+    # Add the total row
+    total_row = {'Service': 'Total', **total_costs}
+    # Convert the total amounts to formatted currency strings
+    for date, amount in total_row.items():
+        if date != 'Service':
+            total_row[date] = format_currency(amount, currency, locale=mylocale)
+
+    # Add the total row to the data
+    sauce_data.append(total_row)
+
+    # set output format
+    sauce_data.output_format=ctx.obj['OUTPUT']
+
+    # sort by total
+    sauce_data.sort_data([('Total', 'asc')])
+
+    # finally, print it
+    print(sauce_data)
 
 @app.command()
 def summary(ctx: typer.Context):
