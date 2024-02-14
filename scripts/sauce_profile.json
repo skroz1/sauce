@@ -1,0 +1,26 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ce:GetCostAndUsage",
+                "ce:GetCostForecast",
+                "storagegateway:ListGateways",
+                "storagegateway:ListTapes",
+                "storagegateway:DescribeGatewayInformation",
+                "storagegateway:DescribeTapes",
+                "storagegateway:DescribeTapeArchives",
+                "storagegateway:CreateTapeWithBarcode",
+                "route53:ChangeResourceRecordSets",
+                "route53:ListHostedZones",
+                "route53:GetHostedZone",
+                "route53:ListHostedZonesByName",
+                "route53:ListResourceRecordSets",
+                "ec2:DescribeSnapshots",
+                "ec2:DeleteSnapshot"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

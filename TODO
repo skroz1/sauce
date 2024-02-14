@@ -10,4 +10,6 @@
 - migrate remaining standalone commands
 - inject some sanity into how the various modules are built and imported.  Lots of legacy cruft from
   different scripts being smooshed together.
-
+- There's something wrong with fit_table_columns in the SauceData module: it's undercounting the width of 
+  columns by 3 or so.  I've fixed this by adding 3 to extwidth, but this is just a hack and won't work for 
+  very wide data.

@@ -215,7 +215,7 @@ def get_terminal_width():
         # Default width if the terminal size cannot be determined
         return 80
 
-def fit_table_columns(terminal_width, data, headers, mincol, extwidth=2):
+def fit_table_columns(terminal_width, data, headers, mincol, extwidth=5):
     """
     Adjust columns to fit within the terminal width for data formatted as a list of lists.
 
