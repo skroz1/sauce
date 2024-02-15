@@ -8,6 +8,8 @@ from SauceData.handler import SauceData
 from typing import Optional
 from utils.amazon import get_aws_session, get_aws_client
 from datetime import datetime, timedelta
+import calendar
+
 
 from utils.utilities import get_last_day_of_month, format_time_period
 
@@ -122,29 +124,37 @@ def prefill_date_headers(start_date_str: str, end_date_str: str) -> list:
     
     return date_list
 
+def get_dates():
+    """
+    Generate datetime objects for the first day of the current month,
+    today, and tomorrow. Additionally, calculate the last day of the current month.
+    """
+    today = datetime.now()
+    start_of_month = today.replace(day=1)
+    tomorrow = today + timedelta(days=1)
+    _, last_day_num = calendar.monthrange(today.year, today.month)
+    end_of_month = start_of_month + timedelta(days=last_day_num - 1)
+    
+    return start_of_month, today, tomorrow, end_of_month
+
 ###
 ### Subcommands
 ###
+
 @app.command()
 def mtd(ctx: typer.Context):
     """
     Get the month-to-date billing summary grouped by service.
     """
     ce_client = get_aws_client(ctx, 'ce')
-    
-    # Current date considerations
-    today = datetime.now()
-    year, month = today.year, today.month
-    start_of_month, _ = format_time_period(year, month)
+    start_of_month, today, tomorrow, _ = get_dates()
 
-    # add one day to today
-    tomorrow = today + timedelta(days=1)
-
-    # Fetch usage by service.  specify dates in iso format
-    service_usage = usage_by_service(ce_client, start_of_month, tomorrow.strftime('%Y-%m-%d'))
+    # Fetch usage by service. Dates are specified in iso format
+    service_usage = usage_by_service(ce_client, start_of_month.strftime('%Y-%m-%d'), tomorrow.strftime('%Y-%m-%d'))
 
     # Create a SauceData object and pre-fill headers with dates in DD-MMM format
-    date_headers = prefill_date_headers(start_of_month, today.strftime('%Y-%m-%d'))
+    date_headers = [start_of_month + timedelta(days=x) for x in range((today - start_of_month).days + 1)]
+    date_headers = [date.strftime('%d-%b') for date in date_headers]
     sauce_data = SauceData(data=[])
     sauce_data.headers = ['Service', 'Total'] + date_headers[::-1]
 
@@ -152,47 +162,32 @@ def mtd(ctx: typer.Context):
     total_costs = {date: 0 for date in date_headers}
     total_costs['Total'] = 0
 
-    # We'll need the currency and locale.  Do this once.
-    currency = None
+    currency = "USD"  # TODO: Fetch from AWS.  ce only seems to have this in forecast
     mylocale = ctx.obj['LOCALE'] or 'en_US'
     
     # Extract and format each row
     for service, daily_data in service_usage.items():
         row = {'Service': service, 'Total': sum(float(daily['Amount']) for daily in daily_data)}
         for daily in daily_data:
-            # find the currency unit or default to USD
-            # TODO cost forecast gives a currency unit, but cost and usage does not
-            if not currency:
-                currency = "USD"
-
             date_str = datetime.strptime(daily['Date'], '%Y-%m-%d').strftime('%d-%b')
-            # Convert Amount to a float in the correct currency and add it (unconverted) to the
-            # totals
-            #row[date_str] = float(daily['Amount'])
             row[date_str] = format_currency(float(daily['Amount']), currency, locale=mylocale)
             total_costs[date_str] += float(daily['Amount'])
             total_costs['Total'] += float(daily['Amount'])
+
         # Convert the total amount to a formatted currency string
         row['Total'] = format_currency(row['Total'], currency, locale=mylocale)
         sauce_data.append(row)
 
     # Add the total row
     total_row = {'Service': 'Total', **total_costs}
-    # Convert the total amounts to formatted currency strings
     for date, amount in total_row.items():
         if date != 'Service':
             total_row[date] = format_currency(amount, currency, locale=mylocale)
-
-    # Add the total row to the data
     sauce_data.append(total_row)
 
-    # set output format
-    sauce_data.output_format=ctx.obj['OUTPUT']
-
-    # sort by total
+    # Set output format, sort by total, and print
+    sauce_data.output_format = ctx.obj['OUTPUT']
     sauce_data.sort_data([('Total', 'asc')])
-
-    # finally, print it
     print(sauce_data)
 
 @app.command()
