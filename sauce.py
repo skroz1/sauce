@@ -7,22 +7,8 @@ import configparser
 from pathlib import Path
 import logging
 from utils.logging import setup_logging
-
-# import commands
-from seskey import seskey
-from updatemyip import updatemyip
-from configure import configure
-from listvtltapes import listvtltapes
-from mktapes import mktapes
-from billing import billing
-from status import status
-from sgstatus import sgstatus
 from typing import Optional
-from pathlib import Path
-import configparser
-import logging
 from typing import Optional
-from utils.logging import setup_logging
 from utils.amazon import get_aws_session
 import locale
 
@@ -35,6 +21,7 @@ from seskey import seskey
 from sgstatus import sgstatus
 from status import status
 from updatemyip import updatemyip
+from events import events
 
 # newbilling has its own subcommands and is imported as a separate app
 from newbilling import app as newbilling_app
@@ -112,6 +99,7 @@ app.command()(mktapes)
 app.command()(billing)
 app.command()(status)
 app.command()(sgstatus)
+app.command()(events)
 
 # again, newbilling has its own subcommands and is imported as a separate app
 app.add_typer(newbilling_app, name="newbilling")

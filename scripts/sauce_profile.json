@@ -6,6 +6,7 @@
             "Action": [
                 "ce:GetCostAndUsage",
                 "ce:GetCostForecast",
+		"cloudtrail:LookupEvents",
                 "storagegateway:ListGateways",
                 "storagegateway:ListTapes",
                 "storagegateway:DescribeGatewayInformation",
