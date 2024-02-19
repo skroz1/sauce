@@ -47,7 +47,7 @@ def events(
     validate_time_range(start_time, end_time)
 
     # create the SauceData object
-    sauce_data = SauceData()
+    sauce_data = SauceData( output_format=output )
 
     # create the cloudtrail client
     ctclient = get_aws_client(ctx, 'cloudtrail')
@@ -86,15 +86,13 @@ def events(
         for event in allevents:
             event['CloudTrailEvent'] = json.loads(event['CloudTrailEvent'])
 
-        # print the count of events
-        typer.echo(f"Found {len(allevents)} events in the time range.")
-
         # sort by date
         allevents = sorted(allevents, key=lambda event: event['EventTime'])
 
         # exclude events for one amazon service communicating with another
         # in short, exclude events where the source and the recipient are both AWS services
         allevents = [event for event in allevents if not event['CloudTrailEvent']['userIdentity']['type'] == 'AWSService']
+
 
         for event in allevents:
             event_data = {
@@ -106,10 +104,9 @@ def events(
                 'eventSource': event['CloudTrailEvent']['eventSource'].split('.')[0],
                 'eventType': event['CloudTrailEvent']['eventType'],
                 'sourceIPAddress': event['CloudTrailEvent']['sourceIPAddress'],
-                'accessKeyId': event['CloudTrailEvent']['userIdentity']['accessKeyId'],
+                'accessKeyId': event['CloudTrailEvent']['userIdentity']['accessKeyId'] if 'accessKeyId' in event['CloudTrailEvent']['userIdentity'] else 'N/A'
             }
             sauce_data.append(event_data)
-            #print (json.dumps(event_data, indent=4, sort_keys=True, default=str))
 
             # set headerlabels
             sauce_data.headerlabels = {
@@ -129,15 +126,9 @@ def events(
     except Exception as e:
         loggers['error'].error(f"An unexpected error occurred: {e}")
 
-    # print the count of filtered events
-    typer.echo(f"Found {len(allevents)} events remaining.")
-    # print the count of filtered events
-    #print (json.dumps(allevents, indent=4, sort_keys=True, default=str))
+    # print the data
     typer.echo( sauce_data )
     
-    # Pretty-print the JSON response and sort by EventTime
-    #print(json.dumps(allevents, indent=4, sort_keys=True, default=str))
-
 if __name__ == "__main__":
     typer.run(events)
 
