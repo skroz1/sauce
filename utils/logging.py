@@ -27,6 +27,11 @@ def setup_logging(log_dir, log_level=logging.INFO):
             'level': log_level,
             'format': '%(asctime)s - %(message)s'
         },
+        'error': {
+            'filename': 'error.log',
+            'level': log_level,
+            'format': '%(asctime)s - %(message)s'
+        },
         # debug log
         'debug': {
             'filename': 'debug.log',

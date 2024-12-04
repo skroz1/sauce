@@ -17,6 +17,7 @@ from configure import configure
 from billing import billing
 from listvtltapes import listvtltapes
 from mktapes import mktapes
+from resources import resources
 from seskey import seskey
 from sgstatus import sgstatus
 from status import status
@@ -97,6 +98,7 @@ app.command()(configure)
 app.command()(listvtltapes)
 app.command()(mktapes)
 app.command()(billing)
+app.command()(resources)
 app.command()(status)
 app.command()(sgstatus)
 app.command()(events)
