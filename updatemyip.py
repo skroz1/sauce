@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-# update_ip.py
-# Module for the updatemyip command in the sauce project.
+# updatemyip.py
+# update the specified A record for this host's IP.
 
 import typer
 from utils import network
